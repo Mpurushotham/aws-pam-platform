@@ -76,7 +76,7 @@ jobs:
         with:
           terraform_version: "1.5.7"
       - run: terraform -chdir="$TF_DIR" init
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tfplan-prod
           path: ${{ env.TF_DIR }}
