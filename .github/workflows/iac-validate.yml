@@ -4,11 +4,10 @@ name: IaC Validate
 # Validates Terraform and Python on every PR and push to main.
 # No AWS credentials required — static analysis only.
 on:
+  # Run on every PR targeting main so the required status checks always report
+  # (a path-filtered trigger would leave docs-only PRs stuck on "Expected").
   pull_request:
-    paths:
-      - "terraform/**"
-      - "scripts/python/**"
-      - ".github/workflows/iac-validate.yml"
+    branches: [main]
   push:
     branches: [main]
 
