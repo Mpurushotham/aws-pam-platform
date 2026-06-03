@@ -11,6 +11,9 @@ locals {
 
 # --- S3 bucket holding raw, encrypted, versioned trail logs -------------------
 resource "aws_s3_bucket" "trail" {
+  #checkov:skip=CKV_AWS_18:Access to this bucket is itself captured by CloudTrail S3 data events; a central server-access-log bucket is out of scope for this module.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally out of scope (cost/complexity); retention is handled via lifecycle to Glacier.
+  #checkov:skip=CKV2_AWS_62:Audit logs are consumed via CloudWatch Logs/Athena, not S3 event notifications.
   bucket = local.bucket_name
   tags   = { Name = local.bucket_name }
 }
@@ -47,6 +50,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "trail" {
     id     = "transition-and-expire"
     status = "Enabled"
     filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
     transition {
       days          = 90
       storage_class = "GLACIER"
@@ -134,6 +140,7 @@ resource "aws_iam_role_policy" "cloudtrail_cw" {
 
 # --- The trail ---------------------------------------------------------------
 resource "aws_cloudtrail" "main" {
+  #checkov:skip=CKV_AWS_252:Trail alerting is delivered via CloudWatch Logs metric filters/alarms and EventBridge->SNS (see monitoring/ and compliance-framework), not a CloudTrail SNS topic.
   name                          = "${var.name_prefix}-trail"
   s3_bucket_name                = aws_s3_bucket.trail.id
   kms_key_id                    = var.kms_key_arn

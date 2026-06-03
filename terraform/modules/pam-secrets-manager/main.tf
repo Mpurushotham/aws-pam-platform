@@ -10,6 +10,7 @@ locals {
 }
 
 resource "aws_secretsmanager_secret" "this" {
+  #checkov:skip=CKV2_AWS_57:Automatic rotation is enabled (aws_secretsmanager_secret_rotation) when rotation_lambda_arn is supplied; until a rotation Lambda is packaged, rotation is operated via pam_secret_rotation.py. See DEPLOYMENT.md.
   for_each = toset(var.managed_secrets)
 
   name                    = "${local.path_prefix}${each.value}"

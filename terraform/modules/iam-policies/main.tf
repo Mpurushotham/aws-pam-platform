@@ -102,6 +102,7 @@ resource "aws_iam_policy" "session_access" {
 
 # --- Read-only auditor (security review, no mutate) --------------------------
 data "aws_iam_policy_document" "auditor" {
+  #checkov:skip=CKV_AWS_356:A read-only compliance auditor requires account-wide Describe/List/Get; every action in this statement is strictly read-only and cannot mutate resources.
   statement {
     sid    = "ReadOnlyAudit"
     effect = "Allow"

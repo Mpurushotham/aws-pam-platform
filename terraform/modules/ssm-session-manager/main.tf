@@ -12,6 +12,9 @@ locals {
 
 # --- S3 bucket for durable session recordings --------------------------------
 resource "aws_s3_bucket" "sessions" {
+  #checkov:skip=CKV_AWS_18:Access to session recordings is captured by CloudTrail S3 data events; a central server-access-log bucket is out of scope for this module.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally out of scope (cost/complexity).
+  #checkov:skip=CKV2_AWS_62:Recordings are consumed via Session Manager/CloudWatch, not S3 event notifications.
   bucket = local.bucket_name
   tags   = { Name = local.bucket_name }
 }
@@ -48,6 +51,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "sessions" {
     id     = "expire-recordings"
     status = "Enabled"
     filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
     expiration {
       days = var.log_retention_days
     }
