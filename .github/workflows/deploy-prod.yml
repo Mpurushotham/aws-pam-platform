@@ -47,7 +47,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_PROD }}
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: gha-plan-prod
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.5.7"
       - run: terraform -chdir="$TF_DIR" init
@@ -72,7 +72,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_PROD }}
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: gha-apply-prod
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.5.7"
       - run: terraform -chdir="$TF_DIR" init
