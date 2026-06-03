@@ -43,6 +43,8 @@ resource "aws_sns_topic_subscription" "email" {
 resource "aws_s3_bucket" "config" {
   #checkov:skip=CKV_AWS_145:KMS encryption is set via aws_s3_bucket_server_side_encryption_configuration.config; checkov cannot link count-indexed sub-resources.
   #checkov:skip=CKV2_AWS_6:Public access is blocked via aws_s3_bucket_public_access_block.config; checkov cannot link count-indexed sub-resources.
+  #checkov:skip=CKV_AWS_21:Versioning is enabled via aws_s3_bucket_versioning.config; checkov cannot link count-indexed sub-resources.
+  #checkov:skip=CKV2_AWS_61:Lifecycle is configured via aws_s3_bucket_lifecycle_configuration.config; checkov cannot link count-indexed sub-resources.
   #checkov:skip=CKV_AWS_18:Access is captured by CloudTrail S3 data events; a central server-access-log bucket is out of scope.
   #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally out of scope (cost/complexity).
   #checkov:skip=CKV2_AWS_62:Config snapshots are consumed by AWS Config, not S3 event notifications.
