@@ -1,0 +1,58 @@
+---
+# Ensures managed EC2 instances have the SSM Agent running and shell history /
+# audit logging configured so privileged sessions are fully captured.
+# Connection is over AWS SSM (community.aws.aws_ssm), so no inbound SSH is
+# required and the session itself is recorded by Session Manager.
+- name: Configure privileged session logging on managed instances
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Ensure SSM Agent is installed and running
+      ansible.builtin.service:
+        name: amazon-ssm-agent
+        state: started
+        enabled: true
+
+    - name: Enforce timestamped, appended shell history (audit aid)
+      ansible.builtin.copy:
+        dest: /etc/profile.d/pam-audit.sh
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          # Managed by Ansible (PAM). Do not edit by hand.
+          export HISTTIMEFORMAT='%F %T '
+          export PROMPT_COMMAND='history -a'
+          readonly HISTFILE
+          readonly HISTSIZE=10000
+
+    - name: Install auditd for syscall-level auditing
+      ansible.builtin.package:
+        name: audit
+        state: present
+
+    - name: Ensure auditd is enabled
+      ansible.builtin.service:
+        name: auditd
+        state: started
+        enabled: true
+
+    - name: Audit privileged command usage (sudo/su)
+      ansible.builtin.copy:
+        dest: /etc/audit/rules.d/pam.rules
+        owner: root
+        group: root
+        mode: "0640"
+        content: |
+          -w /var/log/sudo.log -p wa -k pam_sudo
+          -w /etc/sudoers -p wa -k pam_sudoers
+          -w /etc/sudoers.d/ -p wa -k pam_sudoers
+      notify: restart auditd
+
+  handlers:
+    - name: restart auditd
+      ansible.builtin.service:
+        name: auditd
+        state: restarted

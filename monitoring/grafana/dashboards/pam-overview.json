@@ -1,0 +1,108 @@
+{
+  "uid": "pam-overview",
+  "title": "PAM Overview",
+  "tags": ["pam", "security", "overview"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "utc",
+  "refresh": "5m",
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "custom",
+        "query": "dev,stage,prod",
+        "current": { "text": "prod", "value": "prod" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active privileged grants",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/AccessProvisioner",
+          "metricName": "ActiveGrants",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Pending access requests",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/AccessProvisioner",
+          "metricName": "PendingRequests",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Compliance violations (open)",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Compliance",
+          "metricName": "OpenViolations",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Sessions recorded (24h)",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Sessions",
+          "metricName": "SessionsStarted",
+          "statistic": "Sum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Privileged API calls over time",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Audit",
+          "metricName": "PrivilegedApiCalls",
+          "statistic": "Sum",
+          "period": "300",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    }
+  ]
+}

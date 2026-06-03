@@ -1,0 +1,63 @@
+---
+name: Deploy Dev
+
+# Auto-deploys the dev environment on merges to main. Authenticates to AWS
+# via GitHub OIDC — no long-lived access keys are stored in the repo.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  TF_DIR: terraform/environments/dev
+
+jobs:
+  deploy:
+    name: terraform apply (dev)
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_DEV }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: gha-deploy-dev
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
+      - name: terraform init
+        run: terraform -chdir="$TF_DIR" init
+
+      - name: terraform plan
+        run: terraform -chdir="$TF_DIR" plan -out=tfplan -input=false
+
+      - name: terraform apply
+        run: terraform -chdir="$TF_DIR" apply -input=false -auto-approve tfplan
+
+      - name: Post-deploy smoke audit
+        run: |
+          pip install -r scripts/python/requirements.txt
+          python scripts/python/compliance_auditor.py \
+            --region "$AWS_REGION" --fail-on never --output compliance-dev.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compliance-dev
+          path: compliance-dev.json

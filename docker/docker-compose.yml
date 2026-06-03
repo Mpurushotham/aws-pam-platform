@@ -1,0 +1,29 @@
+---
+# Local stack: PAM tooling image + Grafana pre-loaded with the PAM dashboards.
+# Usage: docker compose -f docker/docker-compose.yml up
+services:
+  tooling:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: pam-tooling:latest
+    environment:
+      - AWS_PROFILE=${AWS_PROFILE:-default}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - PAM_LOG_LEVEL=${PAM_LOG_LEVEL:-INFO}
+    volumes:
+      - ${HOME}/.aws:/home/pam/.aws:ro
+    # Override at runtime, e.g.:
+    #   docker compose run tooling compliance_auditor.py --frameworks cis
+    command: ["pam_privileged_account_discovery.py", "--help"]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro

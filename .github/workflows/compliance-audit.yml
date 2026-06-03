@@ -1,0 +1,85 @@
+---
+name: Compliance Audit
+
+# Weekly automated CIS / PCI-DSS / SOC2 audit plus CloudTrail anomaly scan.
+# Opens/updates a GitHub issue when high-severity findings are detected.
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # 06:00 UTC every Monday
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  audit:
+    name: Run compliance + audit-log analysis
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, stage, prod]
+    environment: ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_AUDIT_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: gha-audit-${{ matrix.environment }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - run: pip install -r scripts/python/requirements.txt
+
+      - name: Compliance audit
+        id: compliance
+        continue-on-error: true
+        run: |
+          python scripts/python/compliance_auditor.py \
+            --region "$AWS_REGION" --frameworks cis,pci-dss,soc2 \
+            --fail-on high --output compliance-${{ matrix.environment }}.json
+
+      - name: CloudTrail anomaly scan
+        id: anomalies
+        continue-on-error: true
+        run: |
+          python scripts/python/audit_log_analyzer.py \
+            --region "$AWS_REGION" --hours 168 \
+            --output findings-${{ matrix.environment }}.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ matrix.environment }}
+          path: |
+            compliance-${{ matrix.environment }}.json
+            findings-${{ matrix.environment }}.json
+
+      - name: Open issue on failure
+        if: steps.compliance.outcome == 'failure' || steps.anomalies.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const env = '${{ matrix.environment }}';
+            let body = `Automated weekly audit detected issues in **${env}**.\n\n`;
+            for (const f of [`compliance-${env}.json`, `findings-${env}.json`]) {
+              if (fs.existsSync(f)) {
+                body += `### ${f}\n\`\`\`json\n${fs.readFileSync(f, 'utf8').slice(0, 4000)}\n\`\`\`\n`;
+              }
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[PAM] Compliance/audit findings in ${env} (${new Date().toISOString().slice(0,10)})`,
+              labels: ['compliance', 'security', env],
+              body,
+            });

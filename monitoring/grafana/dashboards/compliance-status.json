@@ -1,0 +1,137 @@
+{
+  "uid": "pam-compliance-status",
+  "title": "PAM Compliance Status",
+  "tags": ["pam", "compliance", "cis", "pci-dss", "soc2"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "utc",
+  "refresh": "1h",
+  "time": { "from": "now-7d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "custom",
+        "query": "dev,stage,prod",
+        "current": { "text": "prod", "value": "prod" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "gauge",
+      "title": "Overall compliance score (%)",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 100,
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        }
+      },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Compliance",
+          "metricName": "ComplianceScore",
+          "statistic": "Average",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "piechart",
+      "title": "Controls by framework status",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "CIS",
+          "namespace": "PAM/Compliance",
+          "metricName": "CompliantControls",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment", "Framework": "CIS" }
+        },
+        {
+          "refId": "PCI",
+          "namespace": "PAM/Compliance",
+          "metricName": "CompliantControls",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment", "Framework": "PCI-DSS" }
+        },
+        {
+          "refId": "SOC2",
+          "namespace": "PAM/Compliance",
+          "metricName": "CompliantControls",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment", "Framework": "SOC2" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Non-compliant Config rules",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Compliance",
+          "metricName": "NonCompliantRules",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Compliance score trend",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 8 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Compliance",
+          "metricName": "ComplianceScore",
+          "statistic": "Average",
+          "period": "3600",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Secrets overdue for rotation",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Secrets",
+          "metricName": "SecretsOverdueRotation",
+          "statistic": "Maximum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    }
+  ]
+}

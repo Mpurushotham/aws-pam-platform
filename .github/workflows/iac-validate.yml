@@ -1,0 +1,80 @@
+---
+name: IaC Validate
+
+# Validates Terraform and Python on every PR and push to main.
+# No AWS credentials required — static analysis only.
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - "scripts/python/**"
+      - ".github/workflows/iac-validate.yml"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform fmt / validate / scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive terraform/
+
+      - name: terraform validate (all environments)
+        run: |
+          for env in dev stage prod; do
+            echo "::group::validate $env"
+            terraform -chdir="terraform/environments/$env" init -backend=false
+            terraform -chdir="terraform/environments/$env" validate
+            echo "::endgroup::"
+          done
+
+      - name: TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+      - run: tflint --recursive --chdir=terraform --minimum-failure-severity=warning
+
+      - name: Checkov security scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform/
+          framework: terraform
+          quiet: true
+          soft_fail: false
+
+  python:
+    name: Python lint / type / test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r scripts/python/requirements.txt
+
+      - name: black
+        run: black --check scripts/python
+
+      - name: flake8
+        run: flake8 scripts/python
+
+      - name: pytest
+        run: |
+          pytest scripts/python/tests -v \
+            --cov=scripts/python --cov-report=term-missing --cov-fail-under=40

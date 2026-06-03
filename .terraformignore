@@ -1,0 +1,17 @@
+# Exclude non-Terraform assets from remote runs / module packaging
+**/.git
+**/.github
+scripts/
+tests/
+docs/
+documentation/
+monitoring/
+ansible/
+docker/
+*.md
+*.png
+*.jpg
+__pycache__/
+*.py[cod]
+.venv/
+venv/

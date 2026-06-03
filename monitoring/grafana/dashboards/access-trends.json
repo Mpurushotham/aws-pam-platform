@@ -1,0 +1,97 @@
+{
+  "uid": "pam-access-trends",
+  "title": "PAM Access Trends",
+  "tags": ["pam", "access", "trends"],
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "utc",
+  "refresh": "15m",
+  "time": { "from": "now-30d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "custom",
+        "query": "dev,stage,prod",
+        "current": { "text": "prod", "value": "prod" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Access requests by status",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "A",
+          "namespace": "PAM/AccessProvisioner",
+          "metricName": "RequestsApproved",
+          "statistic": "Sum",
+          "dimensions": { "Environment": "$environment" }
+        },
+        {
+          "refId": "B",
+          "namespace": "PAM/AccessProvisioner",
+          "metricName": "RequestsRevoked",
+          "statistic": "Sum",
+          "dimensions": { "Environment": "$environment" }
+        },
+        {
+          "refId": "C",
+          "namespace": "PAM/AccessProvisioner",
+          "metricName": "RequestsExpired",
+          "statistic": "Sum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Average grant duration (hours)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/AccessProvisioner",
+          "metricName": "GrantDurationHours",
+          "statistic": "Average",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "bargauge",
+      "title": "Top roles by grant count (30d)",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/AccessProvisioner",
+          "metricName": "GrantsByRole",
+          "statistic": "Sum",
+          "dimensions": { "Environment": "$environment", "Role": "*" }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Login anomalies detected",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 },
+      "datasource": { "type": "cloudwatch", "uid": "${datasource}" },
+      "targets": [
+        {
+          "namespace": "PAM/Audit",
+          "metricName": "LoginWithoutMFA",
+          "statistic": "Sum",
+          "dimensions": { "Environment": "$environment" }
+        }
+      ]
+    }
+  ]
+}

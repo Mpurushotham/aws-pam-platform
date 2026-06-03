@@ -1,0 +1,16 @@
+---
+# Grafana CloudWatch datasource provisioning.
+# Auth uses the Grafana host's IAM role (EC2/EKS) or a named profile — never
+# static keys checked into source.
+apiVersion: 1
+
+datasources:
+  - name: CloudWatch
+    type: cloudwatch
+    uid: cloudwatch
+    access: proxy
+    isDefault: true
+    jsonData:
+      authType: default          # default = IAM role on the Grafana host
+      defaultRegion: us-east-1
+      customMetricsNamespaces: "PAM/Audit,PAM/Compliance,PAM/Secrets,PAM/Sessions,PAM/AccessProvisioner"
