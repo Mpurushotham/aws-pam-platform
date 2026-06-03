@@ -8,11 +8,6 @@ variable "kms_key_arn" {
   type        = string
 }
 
-variable "cloudwatch_log_arn" {
-  description = "ARN of the CloudWatch Log group receiving session recordings."
-  type        = string
-}
-
 variable "cloudwatch_log_name" {
   description = "Name of the CloudWatch Log group for session recordings."
   type        = string

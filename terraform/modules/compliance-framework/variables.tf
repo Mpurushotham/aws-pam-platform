@@ -3,11 +3,6 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "environment" {
-  description = "Deployment environment (dev/stage/prod)."
-  type        = string
-}
-
 variable "notification_email" {
   description = "Email subscribed to compliance/security alerts. Empty = no subscription."
   type        = string

@@ -7,7 +7,8 @@ On approval the requester is added to the target IAM group for a bounded
 duration; an expiry sweep removes membership once the grant lapses.
 
 Examples:
-    python pam_access_provisioner.py request --user alice --role break-glass-admin --hours 2 --reason "incident 4821"
+    python pam_access_provisioner.py request --user alice \
+        --role break-glass-admin --hours 2 --reason "incident 4821"
     python pam_access_provisioner.py approve --request-id 1a2b3c --approver bob
     python pam_access_provisioner.py expire-sweep
 """

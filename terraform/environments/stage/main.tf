@@ -16,14 +16,12 @@ locals {
 module "kms" {
   source      = "../../modules/kms-encryption"
   name_prefix = local.name_prefix
-  environment = var.environment
 }
 
 # --- CloudTrail + CloudWatch Logs audit trail --------------------------------
 module "cloudtrail" {
   source             = "../../modules/cloudtrail-audit"
   name_prefix        = local.name_prefix
-  environment        = var.environment
   kms_key_arn        = module.kms.cloudtrail_key_arn
   log_retention_days = var.cloudtrail_retention_days
 }
@@ -64,7 +62,6 @@ module "ssm_sessions" {
   source              = "../../modules/ssm-session-manager"
   name_prefix         = local.name_prefix
   kms_key_arn         = module.kms.secrets_key_arn
-  cloudwatch_log_arn  = module.cloudtrail.session_log_group_arn
   cloudwatch_log_name = module.cloudtrail.session_log_group_name
   log_retention_days  = var.session_log_retention_days
 }
@@ -73,7 +70,6 @@ module "ssm_sessions" {
 module "compliance" {
   source             = "../../modules/compliance-framework"
   name_prefix        = local.name_prefix
-  environment        = var.environment
   notification_email = var.alarm_notification_email
   kms_key_arn        = module.kms.secrets_key_arn
 }

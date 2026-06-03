@@ -3,11 +3,6 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "environment" {
-  description = "Deployment environment (dev/stage/prod)."
-  type        = string
-}
-
 variable "key_deletion_window_days" {
   description = "Waiting period before a scheduled key deletion completes."
   type        = number

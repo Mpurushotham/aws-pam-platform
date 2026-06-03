@@ -1,0 +1,35 @@
+---
+# Keeps dependencies and GitHub Actions patched. Security updates are also
+# delivered automatically (enabled at the repo level).
+version: 2
+updates:
+  # Python operational tooling.
+  - package-ecosystem: pip
+    directory: /scripts/python
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "python"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  # GitHub Actions used by the CI/CD workflows.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: ["dependencies", "github-actions", "security"]
+    commit-message:
+      prefix: "chore(ci)"
+
+  # Terraform provider versions per environment.
+  - package-ecosystem: terraform
+    directories:
+      - /terraform/environments/dev
+      - /terraform/environments/stage
+      - /terraform/environments/prod
+    schedule:
+      interval: weekly
+    labels: ["dependencies", "terraform"]
+    commit-message:
+      prefix: "chore(tf)"

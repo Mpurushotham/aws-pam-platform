@@ -1,0 +1,11 @@
+# Code owners are requested for review automatically on matching PRs.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositories-permissions-and-team-settings/about-code-owners
+
+# Default owner for everything in the repo.
+*                           @Mpurushotham
+
+# Security-critical areas — keep ownership explicit even if it duplicates the default.
+/terraform/                 @Mpurushotham
+/scripts/python/            @Mpurushotham
+/.github/                   @Mpurushotham
+/SECURITY.md                @Mpurushotham

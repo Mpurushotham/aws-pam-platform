@@ -3,11 +3,6 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "environment" {
-  description = "Deployment environment (dev/stage/prod)."
-  type        = string
-}
-
 variable "kms_key_arn" {
   description = "KMS key ARN used to encrypt CloudTrail and CloudWatch Logs."
   type        = string

@@ -41,9 +41,40 @@ resource "aws_sns_topic_subscription" "email" {
 
 # --- Config delivery bucket --------------------------------------------------
 resource "aws_s3_bucket" "config" {
+  #checkov:skip=CKV_AWS_145:KMS encryption is set via aws_s3_bucket_server_side_encryption_configuration.config; checkov cannot link count-indexed sub-resources.
+  #checkov:skip=CKV2_AWS_6:Public access is blocked via aws_s3_bucket_public_access_block.config; checkov cannot link count-indexed sub-resources.
+  #checkov:skip=CKV_AWS_21:Versioning is enabled via aws_s3_bucket_versioning.config; checkov cannot link count-indexed sub-resources.
+  #checkov:skip=CKV2_AWS_61:Lifecycle is configured via aws_s3_bucket_lifecycle_configuration.config; checkov cannot link count-indexed sub-resources.
+  #checkov:skip=CKV_AWS_18:Access is captured by CloudTrail S3 data events; a central server-access-log bucket is out of scope.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is intentionally out of scope (cost/complexity).
+  #checkov:skip=CKV2_AWS_62:Config snapshots are consumed by AWS Config, not S3 event notifications.
   count  = var.enable_config_recorder ? 1 : 0
   bucket = local.config_bucket
   tags   = { Name = local.config_bucket }
+}
+
+resource "aws_s3_bucket_versioning" "config" {
+  count  = var.enable_config_recorder ? 1 : 0
+  bucket = aws_s3_bucket.config[0].id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "config" {
+  count  = var.enable_config_recorder ? 1 : 0
+  bucket = aws_s3_bucket.config[0].id
+  rule {
+    id     = "expire-config-snapshots"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+    expiration {
+      days = 365
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "config" {
@@ -129,6 +160,7 @@ resource "aws_config_delivery_channel" "this" {
 }
 
 resource "aws_config_configuration_recorder_status" "this" {
+  #checkov:skip=CKV2_AWS_45:The recorder records all supported + global resources (see aws_config_configuration_recorder.this); checkov cannot link count-indexed resources.
   count      = var.enable_config_recorder ? 1 : 0
   name       = aws_config_configuration_recorder.this[0].name
   is_enabled = true
