@@ -1,0 +1,14 @@
+[flake8]
+# Align flake8 with black's formatting (88 cols) and ignore the two checks
+# that conflict with black: E203 (whitespace before ':') and W503 (line break
+# before binary operator).
+max-line-length = 88
+extend-ignore = E203, W503
+exclude =
+    .git,
+    __pycache__,
+    .terraform,
+    .venv,
+    venv,
+    build,
+    dist
