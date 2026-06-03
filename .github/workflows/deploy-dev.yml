@@ -57,7 +57,7 @@ jobs:
           python scripts/python/compliance_auditor.py \
             --region "$AWS_REGION" --fail-on never --output compliance-dev.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: compliance-dev
           path: compliance-dev.json
